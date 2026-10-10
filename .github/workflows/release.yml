@@ -64,7 +64,10 @@ jobs:
       - name: Report deploy errors
         if: failure()
         run: |
-          grep -E "\[ERROR\]|ERROR|FAILED|Unauthorized|401|403|signature|gpg:" deploy.log | grep -v "^\[INFO\]" | head -25 | while IFS= read -r line; do echo "::error::${line:0:900}"; done
+          N=$(grep -n "BUILD FAILURE" deploy.log | head -1 | cut -d: -f1)
+          [ -z "$N" ] && N=$(wc -l < deploy.log)
+          S=$(( N > 60 ? N - 60 : 1 ))
+          sed -n "${S},${N}p" deploy.log | grep -v "^\[INFO\] *$" | grep -v "Uploaded\|Uploading\|Downloaded\|Downloading" | tail -40 | while IFS= read -r line; do echo "::warning::${line:0:900}"; done
           true
 
       - name: GitHub Release
