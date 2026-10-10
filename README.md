@@ -117,14 +117,7 @@ class UserService {
 
 ## Phát hành (maintainer)
 
-Release chạy bằng GitHub Actions (`.github/workflows/release.yml`):
-
-1. Cập nhật `<version>` trong `pom.xml`, commit.
-2. `git tag v1.0.0 && git push origin v1.0.0`
-3. Workflow build, ký GPG và upload lên Central Portal ở trạng thái *validated*;
-   vào <https://central.sonatype.com/publishing/deployments> bấm **Publish**.
-
-Secrets cần có: `CENTRAL_USERNAME`, `CENTRAL_PASSWORD`, `GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`.
+Xem [RELEASING.md](RELEASING.md): tạo token Central Portal, khóa GPG, điền GitHub Secrets và quy trình release.
 
 ## License
 
