@@ -63,11 +63,19 @@ jobs:
 
       - name: Report deploy errors
         if: failure()
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
         run: |
-          N=$(grep -n "BUILD FAILURE" deploy.log | head -1 | cut -d: -f1)
-          [ -z "$N" ] && N=$(wc -l < deploy.log)
-          S=$(( N > 60 ? N - 60 : 1 ))
-          sed -n "${S},${N}p" deploy.log | grep -v "^\[INFO\] *$" | grep -v "Uploaded\|Uploading\|Downloaded\|Downloading" | tail -40 | while IFS= read -r line; do echo "::warning::${line:0:900}"; done
+          DEP=$(grep -oE "Deployment [0-9a-f-]{36}" deploy.log | tail -1 | awk '{print $2}')
+          if [ -n "$DEP" ]; then
+            TOKEN=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
+            curl -s -X POST -H "Authorization: Bearer $TOKEN" "https://central.sonatype.com/api/v1/publisher/status?id=$DEP" > status.json
+            echo "::error title=state::$(jq -r .deploymentState status.json)"
+            jq -r '.errors // {} | to_entries[] | .key + " => " + (.value|join(" ; "))' status.json | head -8 | while IFS= read -r l; do echo "::error title=central::${l:0:1500}"; done
+          else
+            grep "\[ERROR\]" deploy.log | head -8 | while IFS= read -r l; do echo "::error::${l:0:900}"; done
+          fi
           true
 
       - name: GitHub Release
