@@ -1,0 +1,70 @@
+name: Release to Maven Central
+
+# Chay khi push tag vX.Y.Z (vd: git tag v1.0.0 && git push origin v1.0.0)
+# hoac bam "Run workflow" tren tab Actions.
+#
+# Secrets can co (Settings > Secrets and variables > Actions):
+#   CENTRAL_USERNAME   - user token cua central.sonatype.com
+#   CENTRAL_PASSWORD   - password token cua central.sonatype.com
+#   GPG_PRIVATE_KEY    - private key ASCII-armored (gpg --armor --export-secret-keys <KEY_ID>)
+#   GPG_PASSPHRASE     - passphrase cua key
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      auto_publish:
+        description: 'Tu dong publish sau khi validate (false = vao central.sonatype.com bam Publish)'
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+
+      - name: Check tag matches pom version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          POM_VERSION=$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$POM_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME khong khop pom version $POM_VERSION"; exit 1
+          fi
+
+      - name: Publish public key to keyservers
+        run: |
+          KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/{print $5; exit}')
+          gpg --keyserver hkps://keys.openpgp.org --send-keys "$KEY_ID" || true
+          gpg --keyserver hkps://keyserver.ubuntu.com --send-keys "$KEY_ID" || true
+
+      - name: Deploy to Maven Central
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: >
+          mvn -B -P release deploy
+          -Dcentral.autoPublish=${{ inputs.auto_publish == true }}
+
+      - name: GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            target/flowsql-*.jar
