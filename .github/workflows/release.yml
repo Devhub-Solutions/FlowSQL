@@ -68,6 +68,8 @@ jobs:
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
         run: |
           DEP=$(grep -oE "Deployment [0-9a-f-]{36}" deploy.log | tail -1 | awk '{print $2}')
+          Z=$(find target -name '*.zip' -path '*central*' | head -1)
+          [ -n "$Z" ] && echo "::error title=bundle::$(unzip -Z1 "$Z" | tr '\n' ' ')"
           if [ -n "$DEP" ]; then
             TOKEN=$(printf '%s:%s' "$CENTRAL_USERNAME" "$CENTRAL_PASSWORD" | base64 -w0)
             curl -s -X POST -H "Authorization: Bearer $TOKEN" "https://central.sonatype.com/api/v1/publisher/status?id=$DEP" > status.json
