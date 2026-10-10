@@ -1,6 +1,6 @@
 # FlowSQL
 
-[![CI](https://github.com/Devhub-Solutions/flowsql/actions/workflows/ci.yml/badge.svg)](https://github.com/Devhub-Solutions/flowsql/actions/workflows/ci.yml)
+[![CI](https://github.com/Devhub-Solutions/FlowSQL/actions/workflows/ci.yml/badge.svg)](https://github.com/Devhub-Solutions/FlowSQL/actions/workflows/ci.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/vn.io.devhub/flowsql.svg)](https://central.sonatype.com/artifact/vn.io.devhub/flowsql)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 

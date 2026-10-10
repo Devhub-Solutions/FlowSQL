@@ -12,7 +12,7 @@
     <name>FlowSQL</name>
     <description>Lightweight JDBC toolkit by Devhub Solutions: HikariCP pooling, named parameters (:name),
         thread-bound transactions, multi-datasource registry and Spring Boot auto-configuration.</description>
-    <url>https://github.com/Devhub-Solutions/flowsql</url>
+    <url>https://github.com/Devhub-Solutions/FlowSQL</url>
     <inceptionYear>2026</inceptionYear>
 
     <organization>
@@ -38,15 +38,15 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/Devhub-Solutions/flowsql.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/Devhub-Solutions/flowsql.git</developerConnection>
-        <url>https://github.com/Devhub-Solutions/flowsql</url>
+        <connection>scm:git:https://github.com/Devhub-Solutions/FlowSQL.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/Devhub-Solutions/FlowSQL.git</developerConnection>
+        <url>https://github.com/Devhub-Solutions/FlowSQL</url>
         <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/Devhub-Solutions/flowsql/issues</url>
+        <url>https://github.com/Devhub-Solutions/FlowSQL/issues</url>
     </issueManagement>
 
     <properties>
