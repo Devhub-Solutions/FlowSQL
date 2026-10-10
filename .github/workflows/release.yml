@@ -52,6 +52,16 @@ jobs:
             echo "::error::Tag $GITHUB_REF_NAME khong khop pom version $POM_VERSION"; exit 1
           fi
 
+      - name: Skip if version already on Maven Central
+        id: exists
+        run: |
+          V=$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' "https://repo1.maven.org/maven2/vn/io/devhub/flowsql/$V/flowsql-$V.pom")
+          if [ "$CODE" = "200" ]; then
+            echo "::notice::flowsql $V da co tren Maven Central, bo qua buoc upload"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish public key to keyservers
         run: |
           KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/{print $5; exit}')
@@ -59,6 +69,7 @@ jobs:
           gpg --keyserver hkps://keyserver.ubuntu.com --send-keys "$KEY_ID" || true
 
       - name: Deploy to Maven Central
+        if: steps.exists.outputs.skip != 'true'
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
