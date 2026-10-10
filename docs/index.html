@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FlowSQL — JDBC gọn nhẹ cho Java</title>
+<meta name="description" content="FlowSQL: thư viện JDBC của Devhub Solutions — SQL thuần, named parameter, HikariCP, transaction theo thread, Spring Boot auto-config.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="alternate" type="text/plain" href="llms.txt" title="llms.txt">
+<style>
+:root{
+  --bg:#f7f6f2; --panel:#ffffff; --ink:#1c1b19; --muted:#5f5b53; --line:#e3dfd5;
+  --accent:#0f6e5c; --accent-ink:#ffffff; --accent-soft:#e2f0ec; --code-bg:#1d2321; --code-ink:#e6efe9;
+  --kw:#7fd4b8; --str:#f2c879; --cm:#7d8b86;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121413; --panel:#1a1d1c; --ink:#ecebe6; --muted:#a29e94; --line:#2c302e;
+    --accent:#4fc4a6; --accent-ink:#0d1211; --accent-soft:#1d2b27; --code-bg:#0c0f0e; --code-ink:#dfe8e3;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Be Vietnam Pro",system-ui,sans-serif}
+a{color:var(--accent);text-underline-offset:3px}
+code,pre{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.88em}
+:not(pre)>code{background:var(--accent-soft);padding:.1em .35em;border-radius:4px}
+pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow-x:auto;line-height:1.55;margin:14px 0 22px}
+pre .k{color:var(--kw)} pre .s{color:var(--str)} pre .c{color:var(--cm);font-style:italic}
+.wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px;max-width:1120px;margin:0 auto;padding:0 24px}
+nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:36px 0;font-size:14px}
+nav.toc .brand{font-weight:700;font-size:20px;letter-spacing:-.02em;margin-bottom:4px}
+nav.toc .brand span{color:var(--accent)}
+nav.toc .ver{color:var(--muted);font-size:13px;margin-bottom:22px}
+nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:5px 0 5px 12px;border-left:2px solid var(--line)}
+nav.toc a:hover{color:var(--ink);border-left-color:var(--accent)}
+nav.toc .grp{margin:18px 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+main{padding:36px 0 80px;min-width:0}
+header.hero{padding:28px 0 24px;border-bottom:1px solid var(--line);margin-bottom:12px}
+header.hero h1{font-size:44px;line-height:1.1;letter-spacing:-.03em;margin:0 0 12px}
+header.hero h1 span{color:var(--accent)}
+header.hero p.lead{font-size:19px;color:var(--muted);max-width:640px;margin:0 0 20px}
+.badges{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-block;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-decoration:none;font-weight:500;font-size:14px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+h2{font-size:26px;letter-spacing:-.02em;margin:52px 0 8px;padding-top:8px}
+h3{font-size:18px;margin:28px 0 6px}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:24px 0}
+.feat div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.feat b{display:block;margin-bottom:2px}
+.feat small{color:var(--muted);font-size:14px}
+table{width:100%;border-collapse:collapse;margin:14px 0 22px;font-size:15px;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:16px 0}
+.agent{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:16px}
+footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr;gap:0;padding:0 16px}
+  nav.toc{position:static;height:auto;padding:20px 0 0;display:flex;flex-wrap:wrap;gap:4px 14px}
+  nav.toc .brand,nav.toc .ver{width:100%} nav.toc .grp{display:none}
+  nav.toc a{border:0;padding:2px 0}
+  header.hero h1{font-size:34px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" aria-label="Mục lục">
+  <div class="brand">Flow<span>SQL</span></div>
+  <div class="ver">v1.0.0 · Java 17+</div>
+  <div class="grp">Bắt đầu</div>
+  <a href="#install">Cài đặt</a>
+  <a href="#quickstart">Dùng nhanh</a>
+  <div class="grp">Hướng dẫn</div>
+  <a href="#dataset">Tạo DataSet</a>
+  <a href="#api">API truy vấn</a>
+  <a href="#params">Named parameter</a>
+  <a href="#rows">Đọc kết quả</a>
+  <a href="#tx">Transaction</a>
+  <a href="#multi">Nhiều database</a>
+  <a href="#spring">Spring Boot</a>
+  <a href="#legacy">API kiểu devhub</a>
+  <div class="grp">Khác</div>
+  <a href="#agents">Cho AI agent</a>
+  <a href="apidocs/">Javadoc</a>
+  <a href="https://github.com/Devhub-Solutions/FlowSQL">GitHub</a>
+</nav>
+
+<main>
+<header class="hero">
+  <h1>Viết SQL thuần,<br><span>bỏ phần JDBC rườm rà.</span></h1>
+  <p class="lead">FlowSQL là thư viện JDBC gọn nhẹ của Devhub Solutions: connection pool HikariCP, named parameter <code>:name</code>, transaction theo thread và auto-config cho Spring Boot. Không ORM, không phép thuật.</p>
+  <div class="badges">
+    <a class="btn primary" href="#install">Bắt đầu</a>
+    <a class="btn" href="https://github.com/Devhub-Solutions/FlowSQL">GitHub</a>
+    <a class="btn" href="https://central.sonatype.com/artifact/vn.io.devhub/flowsql">Maven Central</a>
+    <a class="btn" href="apidocs/">Javadoc</a>
+  </div>
+</header>
+
+<div class="feat">
+  <div><b>Pool cấu hình sẵn</b><small>MySQL, MariaDB, PostgreSQL, H2 trên HikariCP.</small></div>
+  <div><b>Named parameter an toàn</b><small>Không nhầm <code>::cast</code>, chuỗi <code>'10:30'</code> hay comment.</small></div>
+  <div><b>Transaction theo thread</b><small><code>inTransaction(...)</code> tự commit/rollback.</small></div>
+  <div><b>Spring Boot</b><small>Khai báo trong <code>application.yml</code> là dùng.</small></div>
+</div>
+
+<h2 id="install">Cài đặt</h2>
+<p>FlowSQL không kèm JDBC driver — thêm driver của database bạn dùng.</p>
+<pre><span class="c">&lt;!-- Maven --&gt;</span>
+&lt;dependency&gt;
+  &lt;groupId&gt;vn.io.devhub&lt;/groupId&gt;
+  &lt;artifactId&gt;flowsql&lt;/artifactId&gt;
+  &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;com.mysql&lt;/groupId&gt;
+  &lt;artifactId&gt;mysql-connector-j&lt;/artifactId&gt;
+  &lt;version&gt;8.4.0&lt;/version&gt;
+&lt;/dependency&gt;</pre>
+<pre><span class="c">// Gradle</span>
+implementation(<span class="s">"vn.io.devhub:flowsql:1.0.0"</span>)
+runtimeOnly(<span class="s">"com.mysql:mysql-connector-j:8.4.0"</span>)</pre>
+
+<h2 id="quickstart">Dùng nhanh</h2>
+<pre><span class="k">import</span> vn.io.devhub.flowsql.*;
+<span class="k">import static</span> vn.io.devhub.flowsql.DataSet.params;
+
+DataSet db = DataSet.mysql()
+        .host(<span class="s">"localhost"</span>).database(<span class="s">"shop"</span>)
+        .user(<span class="s">"app"</span>).pass(System.getenv(<span class="s">"DB_PASS"</span>));
+
+List&lt;Map&lt;String, Object&gt;&gt; users =
+        db.query(<span class="s">"SELECT id, name FROM users WHERE status = :st"</span>, params(<span class="s">"st"</span>, <span class="s">"ACTIVE"</span>));
+
+Object id = db.insert(<span class="s">"INSERT INTO users(name) VALUES(:n)"</span>, params(<span class="s">"n"</span>, <span class="s">"Thành"</span>));
+
+db.inTransaction(() -&gt; {
+    db.execute(<span class="s">"UPDATE acc SET bal = bal - :v WHERE id = :id"</span>, params(<span class="s">"v"</span>, 100, <span class="s">"id"</span>, 1));
+    db.execute(<span class="s">"UPDATE acc SET bal = bal + :v WHERE id = :id"</span>, params(<span class="s">"v"</span>, 100, <span class="s">"id"</span>, 2));
+});</pre>
+
+<h2 id="dataset">Tạo DataSet</h2>
+<p>Mỗi <code>DataSet</code> là một connection pool. Tạo <b>một</b> DataSet cho mỗi database rồi dùng chung — nó thread-safe. Pool được tạo lười ở lần truy vấn đầu tiên.</p>
+<pre>DataSet.mysql()  DataSet.mariadb()  DataSet.postgres()  DataSet.h2(<span class="s">"test"</span>)
+
+DataSet db = DataSet.postgres()
+        .host(<span class="s">"db.local"</span>).port(5432).database(<span class="s">"app"</span>)
+        .user(<span class="s">"app"</span>).pass(secret).ssl(<span class="k">true</span>)
+        .maxPoolSize(20).minIdle(5)
+        .slowQueryMs(500)        <span class="c">// log WARN câu lệnh chậm</span>
+        .leakDetectionMs(0);     <span class="c">// 0 = tắt</span>
+
+<span class="k">new</span> DataSet(DBType.MYSQL).jdbcUrl(<span class="s">"jdbc:mysql://..."</span>);   <span class="c">// URL tự viết</span>
+<span class="k">new</span> DataSet(existingDataSource);                         <span class="c">// bọc pool có sẵn, FlowSQL không đóng nó</span></pre>
+<div class="note">MySQL/MariaDB: mỗi connection được ép <code>time_zone = '+00:00'</code> để <code>NOW()</code> và giờ phía Java khớp nhau. Hãy lưu và so sánh thời gian theo UTC.</div>
+
+<h2 id="api">API truy vấn</h2>
+<p>Các phương thức dưới đây ném <code>FlowSqlException</code> (unchecked) khi lỗi.</p>
+<table>
+<tr><th>Phương thức</th><th>Trả về</th><th>Dùng cho</th></tr>
+<tr><td><code>query(sql, params)</code></td><td><code>List&lt;Map&gt;</code>, không bao giờ null</td><td>SELECT nhiều dòng</td></tr>
+<tr><td><code>queryOne(sql, params)</code></td><td><code>Optional&lt;Map&gt;</code></td><td>SELECT một dòng</td></tr>
+<tr><td><code>queryScalar(sql, params)</code></td><td><code>Object</code></td><td>COUNT, MAX, EXISTS</td></tr>
+<tr><td><code>execute(sql, params)</code></td><td><code>int</code> số dòng</td><td>UPDATE, DELETE, DDL</td></tr>
+<tr><td><code>insert(sql, params)</code></td><td><code>Object</code> khóa tự sinh</td><td>INSERT có auto-increment</td></tr>
+<tr><td><code>batch(sql, List&lt;Map&gt;)</code></td><td><code>int[]</code></td><td>Một câu lệnh, nhiều bộ tham số</td></tr>
+</table>
+<p><code>params(k1, v1, k2, v2, …)</code> tạo <code>HashMap</code> cho phép giá trị null; <code>Map.of</code> cũng dùng được nếu không có null.</p>
+
+<h2 id="params">Named parameter</h2>
+<ul>
+  <li>Cú pháp <code>:ten</code>; một tên có thể dùng nhiều lần.</li>
+  <li>Mỗi <code>:ten</code> phải có key trong map (giá trị được phép null), nếu không sẽ báo lỗi.</li>
+  <li>Bỏ qua: <code>col::text</code>, nội dung trong <code>'…'</code> <code>"…"</code> <code>`…`</code>, comment <code>--</code> và <code>/* */</code>.</li>
+  <li>Tham số chỉ dành cho <b>giá trị</b>. Tên bảng/cột/hướng sắp xếp phải được whitelist rồi nối chuỗi — không bao giờ nối input người dùng vào SQL.</li>
+</ul>
+<h3>Danh sách IN (…)</h3>
+<pre>Map&lt;String, Object&gt; p = <span class="k">new</span> HashMap&lt;&gt;();
+StringJoiner in = <span class="k">new</span> StringJoiner(<span class="s">", "</span>);
+<span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; ids.size(); i++) { in.add(<span class="s">":id"</span> + i); p.put(<span class="s">"id"</span> + i, ids.get(i)); }
+db.query(<span class="s">"SELECT * FROM users WHERE id IN ("</span> + in + <span class="s">")"</span>, p);</pre>
+
+<h2 id="rows">Đọc kết quả</h2>
+<p>Key của map là nhãn cột viết thường. Dùng <code>Rows</code> để đọc không phân biệt hoa thường và có giá trị mặc định:</p>
+<pre>String name    = Rows.str(row, <span class="s">"NAME"</span>);
+long   id      = Rows.getLong(row, <span class="s">"id"</span>, 0L);
+<span class="k">boolean</span> active = Rows.getBool(row, <span class="s">"active"</span>, <span class="k">false</span>);   <span class="c">// true / 1 / Y</span>
+BigDecimal amt = Rows.getDecimal(row, <span class="s">"amount"</span>, BigDecimal.ZERO);
+
+<span class="k">record</span> User(<span class="k">long</span> id, String name) {}
+List&lt;User&gt; list = db.query(<span class="s">"SELECT id, name FROM users"</span>).stream()
+        .map(r -&gt; <span class="k">new</span> User(Rows.getLong(r, <span class="s">"id"</span>, 0), Rows.str(r, <span class="s">"name"</span>)))
+        .toList();</pre>
+
+<h2 id="tx">Transaction</h2>
+<p>Transaction gắn với thread hiện tại: mọi lệnh FlowSQL trên cùng thread (cùng DataSet) tự tham gia.</p>
+<pre>Long orderId = db.inTransaction(() -&gt; {
+    Object id = db.insert(<span class="s">"INSERT INTO orders(total) VALUES(:t)"</span>, params(<span class="s">"t"</span>, 99));
+    db.execute(<span class="s">"UPDATE stock SET qty = qty - 1 WHERE sku = :s"</span>, params(<span class="s">"s"</span>, <span class="s">"A1"</span>));
+    <span class="k">return</span> ((Number) id).longValue();
+});   <span class="c">// lỗi bất kỳ → rollback và ném lại</span>
+
+db.begin();
+<span class="k">try</span> { …; db.commit(); } <span class="k">catch</span> (RuntimeException e) { db.rollback(); <span class="k">throw</span> e; }</pre>
+<div class="note"><code>inTransaction</code> lồng nhau sẽ tham gia transaction bên ngoài. Thread con không dùng chung transaction. Spring <code>@Transactional</code> không điều khiển transaction của FlowSQL.</div>
+
+<h2 id="multi">Nhiều database</h2>
+<pre><span class="k">try</span> (DataSetRegistry reg = <span class="k">new</span> DataSetRegistry()) {
+    reg.register(<span class="s">"main"</span>, DataSet.mysql().host(<span class="s">"a"</span>).database(<span class="s">"app"</span>).user(<span class="s">"u"</span>).pass(<span class="s">"p"</span>));
+    reg.register(<span class="s">"report"</span>, DataSet.postgres().host(<span class="s">"b"</span>).database(<span class="s">"bi"</span>).user(<span class="s">"u"</span>).pass(<span class="s">"p"</span>));
+    DataSet main = reg.get(<span class="s">"main"</span>);
+}</pre>
+
+<h2 id="spring">Spring Boot</h2>
+<p>Có dependency là auto-config chạy (Spring Boot 3), tạo bean <code>DataSetRegistry</code> từ <code>flowsql.datasources.*</code>:</p>
+<pre>flowsql:
+  datasources:
+    main:
+      type: mysql            <span class="c"># mysql | mariadb | postgresql | h2</span>
+      host: db.local
+      database: app
+      username: app
+      password: ${DB_PASS}
+      max-pool-size: 20
+      slow-query-ms: 500
+    report:
+      type: postgresql
+      jdbc-url: jdbc:postgresql://bi:5432/bi
+      username: bi
+      password: ${BI_PASS}</pre>
+<pre><span class="k">@Repository</span>
+<span class="k">class</span> UserRepo {
+    <span class="k">private final</span> DataSet db;
+    UserRepo(DataSetRegistry registry) { <span class="k">this</span>.db = registry.get(<span class="s">"main"</span>); }
+}</pre>
+
+<h2 id="legacy">API kiểu devhub</h2>
+<p>Giữ để code cũ của devhub-solutions chuyển sang không phải sửa. Các hàm này <b>không ném lỗi</b> — phải kiểm tra <code>null</code> / <code>getLastError()</code>. Code mới nên dùng API ở trên.</p>
+<pre>db.setField(<span class="s">"id"</span>, 5);
+List&lt;Map&lt;String, Object&gt;&gt; rows = db.searchAndRetrieve(<span class="s">"SELECT * FROM t WHERE id = :id"</span>);
+<span class="k">if</span> (rows == <span class="k">null</span>) log.error(db.getLastError());
+
+DbUtil.safeQuery(db, <span class="s">"SELECT * FROM t WHERE name = :n"</span>, <span class="s">"n"</span>, <span class="s">"Thành"</span>);</pre>
+
+<h2 id="agents">Cho AI agent</h2>
+<div class="agent">
+  <p style="margin-top:0">Đưa một trong các link này cho agent (Claude, Cursor, Copilot…) để nó viết code đúng với FlowSQL ngay:</p>
+  <ul>
+    <li><a href="SKILL.md"><code>SKILL.md</code></a> — hướng dẫn đầy đủ dạng Agent Skill (có frontmatter, dùng được trực tiếp làm skill).</li>
+    <li><a href="llms.txt"><code>llms.txt</code></a> — cùng nội dung, theo chuẩn llms.txt.</li>
+    <li><a href="apidocs/">Javadoc</a> — tham chiếu API chi tiết.</li>
+  </ul>
+  <p style="margin-bottom:0">Trong repo, skill nằm ở <code>skills/flowsql/SKILL.md</code>. Với Claude Code: chép thư mục đó vào <code>.claude/skills/</code> của dự án.</p>
+</div>
+
+<footer>FlowSQL © 2026 <a href="https://devhub.io.vn">Devhub Solutions</a> · Apache License 2.0</footer>
+</main>
+</div>
+</body>
+</html>

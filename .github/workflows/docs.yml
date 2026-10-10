@@ -1,0 +1,53 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**', 'skills/**', 'src/main/**', 'pom.xml', '.github/workflows/docs.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Javadoc
+        run: mvn -B -DskipTests org.apache.maven.plugins:maven-javadoc-plugin:3.7.0:javadoc -Ddoclint=none
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r docs/. _site/
+          APIDOCS=$(find target -type d -name apidocs | head -1)
+          cp -r "$APIDOCS" _site/apidocs
+          cp skills/flowsql/SKILL.md _site/SKILL.md
+          { echo "# FlowSQL"; echo; echo "> Java JDBC toolkit (vn.io.devhub:flowsql). Docs: https://devhub-solutions.github.io/FlowSQL/"; echo;
+            sed '1,/^---$/d' skills/flowsql/SKILL.md; } > _site/llms.txt
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

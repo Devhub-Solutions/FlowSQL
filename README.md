@@ -16,6 +16,10 @@ không ORM, không boilerplate:
 
 Yêu cầu Java 17+.
 
+📖 **Tài liệu:** https://devhub-solutions.github.io/FlowSQL/ · **Javadoc:** https://devhub-solutions.github.io/FlowSQL/apidocs/
+
+🤖 **Cho AI agent:** [`SKILL.md`](https://devhub-solutions.github.io/FlowSQL/SKILL.md) · [`llms.txt`](https://devhub-solutions.github.io/FlowSQL/llms.txt) (skill trong repo: `skills/flowsql/`)
+
 ## Cài đặt
 
 ```xml
